@@ -1,0 +1,44 @@
+# Binaries
+*.exe
+*.txt
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build outputs
+*.test
+*.out
+/dist/
+/build/
+/installer/
+
+# Temporary files
+/tmp/
+/temp/
+*.tmp
+
+# Logs
+*.log
+/logs/
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local configuration
+.env
+.env.*
+config.local.json
+
+# External tools
+SumatraPDF.exe
+/tools/
