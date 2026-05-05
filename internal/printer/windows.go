@@ -288,19 +288,23 @@ func PrintPDFWithSumatra(printerName string, pdfPath string, copies int) error {
 		copies = 1
 	}
 
-	printSettings := fmt.Sprintf("noscale,%dx", copies)
+	for i := 1; i <= copies; i++ {
+		cmd := exec.Command(
+			sumatraPath,
+			"-print-to", printerName,
+			"-print-settings", "noscale",
+			"-silent",
+			pdfPath,
+		)
 
-	cmd := exec.Command(
-		sumatraPath,
-		"-print-to", printerName,
-		"-print-settings", printSettings,
-		"-silent",
-		pdfPath,
-	)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("error imprimiendo PDF copia %d de %d: %v - %s", i, copies, err, string(output))
+		}
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("error imprimiendo PDF: %v - %s", err, string(output))
+		if i < copies {
+			time.Sleep(5 * time.Second)
+		}
 	}
 
 	return nil
