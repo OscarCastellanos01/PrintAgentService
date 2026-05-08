@@ -239,6 +239,40 @@ Respuesta:
 }
 ```
 
+### POST /print/esc-pos
+
+Envía bytes ESC/POS crudos a una impresora térmica. Los datos van en el body como `application/octet-stream` y los parámetros como query string.
+
+```http
+POST http://127.0.0.1:9876/print/esc-pos?printer_name=EPSON&copies=1
+Content-Type: application/octet-stream
+```
+
+Con impresora predeterminada:
+
+```http
+POST http://127.0.0.1:9876/print/esc-pos?use_default_printer=true&copies=1
+Content-Type: application/octet-stream
+```
+
+Parámetros query string:
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `printer_name` | string | Nombre exacto de la impresora |
+| `use_default_printer` | boolean | Usar impresora predeterminada (`true`) |
+| `copies` | number | Cantidad de copias (default: 1) |
+
+El body debe contener los bytes ESC/POS generados por la librería. No se acepta JSON ni base64.
+
+Respuesta:
+
+```json
+{
+  "message": "ESC/POS enviado correctamente"
+}
+```
+
 ## Uso desde JavaScript
 
 ### Imprimir PDF
@@ -303,6 +337,29 @@ await fetch("http://127.0.0.1:9876/print/zpl/raw", {
     copies: 1
   })
 });
+```
+
+### Imprimir ESC/POS
+
+```js
+const ESC = 0x1B
+const GS = 0x1D
+
+const bytes = new Uint8Array([
+  ESC, 0x40,
+  ESC, 0x61, 0x01,
+  ...new TextEncoder().encode("MI TIENDA\n"),
+  ESC, 0x61, 0x00,
+  ...new TextEncoder().encode("Producto 1       $10.00\n"),
+  0x0A, 0x0A, 0x0A,
+  GS, 0x56, 0x01,
+])
+
+await fetch("http://127.0.0.1:9876/print/esc-pos?use_default_printer=true&copies=1", {
+  method: "POST",
+  headers: { "Content-Type": "application/octet-stream" },
+  body: bytes
+})
 ```
 
 ## Configuración

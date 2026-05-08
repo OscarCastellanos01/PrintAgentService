@@ -25,3 +25,9 @@ type PrintRawRequest struct {
 	Raw string `json:"raw"`
 	Copies int `json:"copies"`
 }
+
+type PrintEscPosRequest struct {
+	PrinterName string `json:"printer_name"`
+	UseDefaultPrinter bool `json:"use_default_printer"`
+	Copies int `json:"copies"`
+}

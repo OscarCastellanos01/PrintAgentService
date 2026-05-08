@@ -60,6 +60,7 @@ func (p *Program) run() {
 	mux.HandleFunc("/printers", handlers.HandlePrinters)
 	mux.HandleFunc("/print/pdf", handlers.HandlePrintPDF)
 	mux.HandleFunc("/print/zpl/raw", handlers.HandlePrintZPLRaw)
+	mux.HandleFunc("/print/esc-pos", handlers.HandlePrintEscPos)
 
 	p.server = &http.Server{
 		Addr: config.Addr(),

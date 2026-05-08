@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -150,6 +152,55 @@ func HandlePrintZPLRaw(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("ZPL RAW enviado", "printer", printerName, "copies", req.Copies)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "ZPL RAW enviado correctamente"})
+}
+
+func HandlePrintEscPos(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Método no permitido"})
+		return
+	}
+
+	ct := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/octet-stream") {
+		writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{"error": "Content-Type debe ser application/octet-stream"})
+		return
+	}
+
+	printerName := strings.TrimSpace(r.URL.Query().Get("printer_name"))
+	useDefault := r.URL.Query().Get("use_default_printer") == "true"
+	copies := 1
+
+	if c := r.URL.Query().Get("copies"); c != "" {
+		if n, err := strconv.Atoi(c); err == nil && n > 0 {
+			copies = n
+		}
+	}
+
+	resolvedPrinter, err := printer.ResolvePrinterName(printerName, useDefault)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "error leyendo body"})
+		return
+	}
+
+	if len(data) == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "el body no puede estar vacío"})
+		return
+	}
+
+	if err := printer.RawPrintCopies(resolvedPrinter, data, copies); err != nil {
+		slog.Error("error enviando ESC/POS", "printer", resolvedPrinter, "err", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	slog.Info("ESC/POS enviado", "printer", resolvedPrinter, "copies", copies, "bytes", len(data))
+	writeJSON(w, http.StatusOK, map[string]string{"message": "ESC/POS enviado correctamente"})
 }
 
 func isJSON(r *http.Request) bool {

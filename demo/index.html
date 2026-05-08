@@ -105,6 +105,69 @@
 
     </div>
 
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center">
+          <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h2 class="text-sm font-semibold text-slate-700">ESC/POS — Ticket de prueba</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2 space-y-3">
+          <div>
+            <label class="label">Nombre del negocio</label>
+            <input id="escpos-business" type="text" value="MI TIENDA" class="input">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Producto 1</label>
+              <input id="escpos-p1" type="text" value="Coca Cola 600ml" class="input">
+            </div>
+            <div>
+              <label class="label">Precio</label>
+              <input id="escpos-p1-price" type="text" value="$40.00" class="input">
+            </div>
+            <div>
+              <label class="label">Producto 2</label>
+              <input id="escpos-p2" type="text" value="Pan de caja" class="input">
+            </div>
+            <div>
+              <label class="label">Precio</label>
+              <input id="escpos-p2-price" type="text" value="$35.00" class="input">
+            </div>
+            <div>
+              <label class="label">Producto 3</label>
+              <input id="escpos-p3" type="text" value="Leche Lala 1L" class="input">
+            </div>
+            <div>
+              <label class="label">Precio</label>
+              <input id="escpos-p3-price" type="text" value="$87.00" class="input">
+            </div>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="label">Impresora</label>
+            <select id="escpos-printer" class="input">
+              <option value="">Cargando impresoras...</option>
+            </select>
+            <label class="mt-1.5 flex items-center gap-2 cursor-pointer select-none">
+              <input id="escpos-default" type="checkbox" class="accent-indigo-600" onchange="togglePrinterSelect('escpos-printer', 'escpos-default')">
+              <span class="text-xs text-slate-500">Predeterminada</span>
+            </label>
+          </div>
+          <div>
+            <label class="label">Copias</label>
+            <input id="escpos-copies" type="number" value="1" min="1" class="input w-20">
+          </div>
+          <button onclick="sendEscPos()" class="btn-primary w-full">Imprimir ticket</button>
+        </div>
+      </div>
+      <div id="escpos-result" class="hidden"></div>
+    </div>
+
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">

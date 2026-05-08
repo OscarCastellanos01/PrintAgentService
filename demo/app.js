@@ -29,7 +29,7 @@ async function fetchPrinters() {
 }
 
 function populatePrinterSelects() {
-  const selects = ['pdf-printer', 'zpl-printer']
+  const selects = ['pdf-printer', 'zpl-printer', 'escpos-printer']
 
   selects.forEach(id => {
     const select = document.getElementById(id)
@@ -108,6 +108,80 @@ async function printPDF() {
     pdf_base64: base64,
     copies: copies
   }, resultEl)
+}
+
+async function sendEscPos() {
+  const select = document.getElementById('escpos-printer')
+  const useDefault = document.getElementById('escpos-default').checked
+  const copies = parseInt(document.getElementById('escpos-copies').value) || 1
+  const resultEl = document.getElementById('escpos-result')
+
+  const printerName = useDefault ? '' : select.value
+  if (!useDefault && !printerName) {
+    showResult(resultEl, false, 'Selecciona una impresora.')
+    return
+  }
+
+  const business = document.getElementById('escpos-business').value || 'MI TIENDA'
+  const p1 = document.getElementById('escpos-p1').value || 'Producto 1'
+  const p1Price = document.getElementById('escpos-p1-price').value || '$0.00'
+  const p2 = document.getElementById('escpos-p2').value || 'Producto 2'
+  const p2Price = document.getElementById('escpos-p2-price').value || '$0.00'
+  const p3 = document.getElementById('escpos-p3').value || 'Producto 3'
+  const p3Price = document.getElementById('escpos-p3-price').value || '$0.00'
+
+  const ESC = 0x1B
+  const GS = 0x1D
+  const enc = str => Array.from(new TextEncoder().encode(str))
+  const row = (name, price) => enc(name.padEnd(28) + price.padStart(10) + '\n')
+
+  const bytes = new Uint8Array([
+    ESC, 0x40,
+    ESC, 0x61, 0x01,
+    ...enc(business + '\n'),
+    ...enc('================================\n'),
+    ESC, 0x61, 0x00,
+    ESC, 0x45, 0x01,
+    ...enc('PRODUCTO                        PRECIO\n'),
+    ESC, 0x45, 0x00,
+    ...enc('--------------------------------------\n'),
+    ...row(p1, p1Price),
+    ...row(p2, p2Price),
+    ...row(p3, p3Price),
+    ...enc('--------------------------------------\n'),
+    ESC, 0x61, 0x02,
+    ESC, 0x45, 0x01,
+    ...enc('TOTAL:                        $162.00\n'),
+    ESC, 0x45, 0x00,
+    ESC, 0x61, 0x01,
+    ...enc('================================\n'),
+    ...enc('Gracias por su compra\n'),
+    0x0A, 0x0A, 0x0A,
+    GS, 0x56, 0x01,
+  ])
+
+  const params = new URLSearchParams({ copies })
+  if (useDefault) {
+    params.set('use_default_printer', 'true')
+  } else {
+    params.set('printer_name', printerName)
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/print/esc-pos?${params}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: bytes
+    })
+    const data = await res.json()
+    if (res.ok) {
+      showResult(resultEl, true, data.message)
+    } else {
+      showResult(resultEl, false, data.error)
+    }
+  } catch {
+    showResult(resultEl, false, 'No se pudo conectar al agente.')
+  }
 }
 
 async function sendZPL() {
