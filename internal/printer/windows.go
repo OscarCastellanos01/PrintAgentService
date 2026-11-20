@@ -159,12 +159,11 @@ func GetDefaultPrinterName() (string, error) {
 func ResolvePrinterName(printerName string, useDefault bool) (string, error) {
 	printerName = strings.TrimSpace(printerName)
 
-	if printerName != "" {
-		return printerName, nil
-	}
-
 	if !useDefault {
-		return "", errors.New("printer_name es requerido o debe enviar use_default_printer en true")
+		if printerName == "" {
+			return "", errors.New("printer_name es requerido o debe enviar use_default_printer en true")
+		}
+		return printerName, nil
 	}
 
 	defaultPrinter, err := GetDefaultPrinterName()

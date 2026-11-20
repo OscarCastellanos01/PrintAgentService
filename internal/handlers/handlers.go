@@ -167,7 +167,7 @@ func HandlePrintEscPos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	printerName := strings.TrimSpace(r.URL.Query().Get("printer_name"))
-	useDefault := r.URL.Query().Get("use_default_printer") == "true"
+	useDefault, _ := strconv.ParseBool(strings.TrimSpace(r.URL.Query().Get("use_default_printer")))
 	copies := 1
 
 	if c := r.URL.Query().Get("copies"); c != "" {
