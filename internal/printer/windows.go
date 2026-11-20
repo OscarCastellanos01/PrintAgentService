@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unsafe"
@@ -130,7 +131,52 @@ func GetPrinters() ([]models.Printer, error) {
 	return printers, nil
 }
 
+var (
+	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
+	advapi32 = windows.NewLazySystemDLL("advapi32.dll")
+	procWTSQueryUserToken = wtsapi32.NewProc("WTSQueryUserToken")
+	procImpersonateLoggedOnUsr = advapi32.NewProc("ImpersonateLoggedOnUser")
+	procRevertToSelf = advapi32.NewProc("RevertToSelf")
+)
+
 func GetDefaultPrinterName() (string, error) {
+	if name, err := defaultPrinterAsActiveUser(); err == nil && strings.TrimSpace(name) != "" {
+		return name, nil
+	}
+
+	return getDefaultPrinterCurrentContext()
+}
+
+func defaultPrinterAsActiveUser() (string, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	sessionID := windows.WTSGetActiveConsoleSessionId()
+	if sessionID == 0xFFFFFFFF {
+		return "", errors.New("no hay sesión de consola activa")
+	}
+
+	var token windows.Token
+
+	r1, _, err := procWTSQueryUserToken.Call(
+		uintptr(sessionID),
+		uintptr(unsafe.Pointer(&token)),
+	)
+	if r1 == 0 {
+		return "", fmt.Errorf("WTSQueryUserToken: %v", err)
+	}
+	defer token.Close()
+
+	r1, _, err = procImpersonateLoggedOnUsr.Call(uintptr(token))
+	if r1 == 0 {
+		return "", fmt.Errorf("ImpersonateLoggedOnUser: %v", err)
+	}
+	defer procRevertToSelf.Call()
+
+	return getDefaultPrinterCurrentContext()
+}
+
+func getDefaultPrinterCurrentContext() (string, error) {
 	var size uint32
 
 	r1, _, err := procGetDefaultPrinter.Call(
